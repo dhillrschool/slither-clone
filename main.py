@@ -1,17 +1,18 @@
 import pygame
 import requests
-import time
 import json
 
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
 font_big = pygame.font.SysFont("Consolas", 100)
 clock = pygame.time.Clock()
-current_time = time.time()
+frames = 0
 players = []
+food = []
 
 x = 30
 y = 50
+snake_len = 10
 
 screen.fill((31, 31, 31))
 txt_surface = font_big.render("connecting...", True, (255, 255, 255))
@@ -23,22 +24,38 @@ def get_users():
     request = requests.get("http://localhost:5000/users")
     return json.loads(request.content)
 
+def get_food():
+    request = requests.get("http://localhost:5000/food")
+    return json.loads(request.content)
+
+def leave(): requests.get(f"http://localhost:5000/remove/{ID}")
+
 while True:
     screen.fill((31, 31, 31))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            leave()
             pygame.quit()
             exit()
 
-    for p in players:
-        pygame.draw.rect(screen, (255, 255, 255), (p["x"], p["y"], 20, 20))
+    for index, p in enumerate(players):
+        if index != ID - 1:
+            pygame.draw.circle(screen, (255, 255, 255), (p["x"], p["y"]), 20)
+
+    for index, f in enumerate(food):
+        pygame.draw.circle(screen, (255, 0, 0), (f["x"], f["y"]), 10)
+        if (f["x"] - x) * (f["x"] - x) + (f["y"] - y) * (f["y"] - y) < 400:
+            requests.get(f"http://localhost:5000/remove_food/{index}")
+
+    pygame.draw.circle(screen, (255, 255, 255), (x, y), 20)
 
     x, y = pygame.mouse.get_pos()
     
     clock.tick(60)
-    if time.time() - current_time > 0.1:
-        requests.post(f"http://localhost:5000/modify/{ID}", json={"x": x, "y": y, "dir": 100})
+    if frames & 1:
+        requests.post(f"http://localhost:5000/modify/{ID}", json={"x": x, "y": y, "dir": 100, "length": snake_len})
         players = get_users()
-        current_time = time.time()
+        food = get_food()
+    frames += 1
     pygame.display.flip()
