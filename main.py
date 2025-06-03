@@ -10,17 +10,20 @@ clock = pygame.time.Clock()
 current_time = time.time()
 players = []
 
+x = 30
+y = 50
+
 screen.fill((31, 31, 31))
 txt_surface = font_big.render("connecting...", True, (255, 255, 255))
 screen.blit(txt_surface, txt_surface.get_rect(center=(screen.get_size()[0] // 2, screen.get_size()[1] // 2)))
 pygame.display.flip()
-requests.post("http://localhost:5000/register", json={"username": "kirby"})
+ID = int(requests.post("http://localhost:5000/register", json={"username": "kirby"}).content)
 
 def get_users():
     request = requests.get("http://localhost:5000/users")
     return json.loads(request.content)
 
-requests.post("http://localhost:5000/modify/1", json={"user_id": 1, "x": 30, "y": 50, "dir": 100})
+requests.post(f"http://localhost:5000/modify/{ID}", json={"x": x, "y": y, "dir": 100})
 
 while True:
     screen.fill((31, 31, 31))

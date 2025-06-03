@@ -13,7 +13,7 @@ def register():
     data = request.get_json()
     username = data.get("username")
     users.append({"username": username, "x": 0, "y": 0, "dir": 0})
-    return len(users)
+    return str(len(users))
 
 @app.route("/modify/<user_id>", methods=['POST'])
 def modify(user_id):
