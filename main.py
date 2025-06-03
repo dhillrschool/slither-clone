@@ -23,8 +23,6 @@ def get_users():
     request = requests.get("http://localhost:5000/users")
     return json.loads(request.content)
 
-requests.post(f"http://localhost:5000/modify/{ID}", json={"x": x, "y": y, "dir": 100})
-
 while True:
     screen.fill((31, 31, 31))
 
@@ -35,9 +33,12 @@ while True:
 
     for p in players:
         pygame.draw.rect(screen, (255, 255, 255), (p["x"], p["y"], 20, 20))
+
+    x, y = pygame.mouse.get_pos()
     
     clock.tick(60)
-    if time.time() - current_time > 0.5:
+    if time.time() - current_time > 0.1:
+        requests.post(f"http://localhost:5000/modify/{ID}", json={"x": x, "y": y, "dir": 100})
         players = get_users()
         current_time = time.time()
     pygame.display.flip()
