@@ -1,6 +1,7 @@
 import pygame
 import requests
 import json
+import math
 
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
@@ -13,6 +14,34 @@ food = []
 x = 30
 y = 50
 snake_len = 10
+
+class Snake:
+    def __init__(self, x, y, dir, length):
+        self.x = x
+        self.y = y
+        self.dir = dir
+        self.length = length
+        self.parts = []
+
+    def update(self):
+        mouse_pos = pygame.mouse.get_pos()
+
+        self.parts.append((self.x, self.y))
+        self.dir = math.atan2(mouse_pos[0] - self.x, mouse_pos[1] - self.y)
+        self.x += 2 * math.sin(self.dir)
+        self.y += 2 * math.cos(self.dir)
+
+        if len(self.parts) > self.length:
+            self.parts.pop(0)
+
+    def draw(self, surface: pygame.Surface):
+        for part in self.parts:
+            pygame.draw.circle(surface, (255, 255, 255), part, 20)
+
+    def post(self):
+        requests.post(f"http://localhost:5000/modify/{ID}", json={"x": self.x, "y": self.y, "dir": self.dir, "length": self.length})
+
+player = Snake(0, 0, 0, 10)
 
 screen.fill((31, 31, 31))
 txt_surface = font_big.render("connecting...", True, (255, 255, 255))
@@ -45,17 +74,16 @@ while True:
 
     for index, f in enumerate(food):
         pygame.draw.circle(screen, (255, 0, 0), (f["x"], f["y"]), 10)
-        if (f["x"] - x) * (f["x"] - x) + (f["y"] - y) * (f["y"] - y) < 400:
-            snake_len += 1
+        if (f["x"] - player.x) * (f["x"] - player.x) + (f["y"] - player.y) * (f["y"] - player.y) < 400:
+            player.length += 1
             requests.get(f"http://localhost:5000/remove_food/{index}")
 
-    pygame.draw.circle(screen, (255, 255, 255), (x, y), 20)
-
-    x, y = pygame.mouse.get_pos()
+    player.draw(screen)
+    player.update()
     
     clock.tick(60)
     if frames & 1:
-        requests.post(f"http://localhost:5000/modify/{ID}", json={"x": x, "y": y, "dir": 100, "length": snake_len})
+        player.post()
         players = get_users()
         food = get_food()
     frames += 1
