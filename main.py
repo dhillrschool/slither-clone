@@ -15,6 +15,8 @@ class Snake:
     def __init__(self, x, y, dir, length):
         self.x = x
         self.y = y
+        self.px = x
+        self.py = y
         self.dir = dir
         self.length = length
         self.parts = []
@@ -28,17 +30,24 @@ class Snake:
 
         if pygame.mouse.get_pressed()[0]: speed = 4
 
-        self.parts.append((self.x, self.y))
+        if (self.x - self.px) * (self.x - self.px) + (self.y - self.py) * (self.y - self.py) > 400:
+            self.parts.append((self.x, self.y))
+            self.px = self.x
+            self.py = self.y
+        
         if move:
             self.dir = math.atan2(mouse_pos[0] - self.x, mouse_pos[1] - self.y)
             self.x += speed * math.sin(self.dir)
             self.y += speed * math.cos(self.dir)
 
-        if len(self.parts) > self.length/speed:
+        if len(self.parts) > self.length:
             self.parts.pop(0)
 
     def draw(self, surface: pygame.Surface):
-        for part in self.parts:
+        pygame.draw.circle(surface, (255, 255, 255), (self.x, self.y), 20)
+        for index, part in enumerate(self.parts):
+            # if index > 0:
+            #     pygame.draw.line(surface, (255, 255, 255), part, self.parts[index - 1], 40)
             pygame.draw.circle(surface, (255, 255, 255), part, 20)
 
     def post(self):
@@ -82,8 +91,9 @@ while True:
     for index, f in enumerate(food):
         pygame.draw.circle(screen, (255, 0, 0), (f["x"], f["y"]), 10)
         if (f["x"] - player.x) * (f["x"] - player.x) + (f["y"] - player.y) * (f["y"] - player.y) < 400:
-            player.length += 1
             requests.get(f"http://localhost:5000/remove_food/{index}")
+            player.length += 1
+            break
 
     player.draw(screen)
     player.update()
@@ -102,6 +112,5 @@ while True:
             snakes[index].dir = p["dir"]
             snakes[index].length = p["length"]
         food = get_food()
-    print(snakes)
     frames += 1
     pygame.display.flip()
