@@ -11,10 +11,6 @@ frames = 0
 players = []
 food = []
 
-x = 30
-y = 50
-snake_len = 10
-
 class Snake:
     def __init__(self, x, y, dir, length):
         self.x = x
@@ -25,13 +21,16 @@ class Snake:
 
     def update(self):
         mouse_pos = pygame.mouse.get_pos()
+        speed = 2
+
+        if pygame.mouse.get_pressed()[0]: speed = 4
 
         self.parts.append((self.x, self.y))
         self.dir = math.atan2(mouse_pos[0] - self.x, mouse_pos[1] - self.y)
-        self.x += 2 * math.sin(self.dir)
-        self.y += 2 * math.cos(self.dir)
+        self.x += speed * math.sin(self.dir)
+        self.y += speed * math.cos(self.dir)
 
-        if len(self.parts) > self.length:
+        if len(self.parts) > self.length/speed:
             self.parts.pop(0)
 
     def draw(self, surface: pygame.Surface):
