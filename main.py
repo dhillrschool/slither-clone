@@ -46,6 +46,7 @@ while True:
     for index, f in enumerate(food):
         pygame.draw.circle(screen, (255, 0, 0), (f["x"], f["y"]), 10)
         if (f["x"] - x) * (f["x"] - x) + (f["y"] - y) * (f["y"] - y) < 400:
+            snake_len += 1
             requests.get(f"http://localhost:5000/remove_food/{index}")
 
     pygame.draw.circle(screen, (255, 255, 255), (x, y), 20)
