@@ -19,16 +19,20 @@ class Snake:
         self.length = length
         self.parts = []
 
-    def update(self):
+    def __repr__(self):
+        return f"snake at ({self.x}, {self.y}) facing {self.dir} length {self.length}"
+
+    def update(self, move=True):
         mouse_pos = pygame.mouse.get_pos()
         speed = 2
 
         if pygame.mouse.get_pressed()[0]: speed = 4
 
         self.parts.append((self.x, self.y))
-        self.dir = math.atan2(mouse_pos[0] - self.x, mouse_pos[1] - self.y)
-        self.x += speed * math.sin(self.dir)
-        self.y += speed * math.cos(self.dir)
+        if move:
+            self.dir = math.atan2(mouse_pos[0] - self.x, mouse_pos[1] - self.y)
+            self.x += speed * math.sin(self.dir)
+            self.y += speed * math.cos(self.dir)
 
         if len(self.parts) > self.length/speed:
             self.parts.pop(0)
@@ -40,6 +44,7 @@ class Snake:
     def post(self):
         requests.post(f"http://localhost:5000/modify/{ID}", json={"x": self.x, "y": self.y, "dir": self.dir, "length": self.length})
 
+snakes: list[Snake] = []
 player = Snake(0, 0, 0, 10)
 
 screen.fill((31, 31, 31))
@@ -56,7 +61,9 @@ def get_food():
     request = requests.get("http://localhost:5000/food")
     return json.loads(request.content)
 
-def leave(): requests.get(f"http://localhost:5000/remove/{ID}")
+def leave(): 
+    requests.get(f"http://localhost:5000/remove/{ID}")
+    snakes.pop(ID-1)
 
 while True:
     screen.fill((31, 31, 31))
@@ -67,9 +74,10 @@ while True:
             pygame.quit()
             exit()
 
-    for index, p in enumerate(players):
+    for index, p in enumerate(snakes):
         if index != ID - 1:
-            pygame.draw.circle(screen, (255, 255, 255), (p["x"], p["y"]), 20)
+            snakes[index].draw(screen)
+            snakes[index].update(move=False)
 
     for index, f in enumerate(food):
         pygame.draw.circle(screen, (255, 0, 0), (f["x"], f["y"]), 10)
@@ -84,6 +92,16 @@ while True:
     if frames & 1:
         player.post()
         players = get_users()
+        if len(players) > len(snakes):
+            for i in range(len(snakes), len(players)):
+                p = players[i]
+                snakes.append(Snake(p["x"], p["y"], p["dir"], p["length"]))
+        for index, p in enumerate(players):
+            snakes[index].x = p["x"]
+            snakes[index].y = p["y"]
+            snakes[index].dir = p["dir"]
+            snakes[index].length = p["length"]
         food = get_food()
+    print(snakes)
     frames += 1
     pygame.display.flip()
