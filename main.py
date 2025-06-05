@@ -30,7 +30,7 @@ class Snake:
 
         if pygame.mouse.get_pressed()[0]: speed = 4
 
-        if (self.x - self.px) * (self.x - self.px) + (self.y - self.py) * (self.y - self.py) > 400:
+        if (self.x - self.px) * (self.x - self.px) + (self.y - self.py) * (self.y - self.py) > 225:
             self.parts.append((self.x, self.y))
             self.px = self.x
             self.py = self.y
@@ -93,7 +93,6 @@ while True:
         if (f["x"] - player.x) * (f["x"] - player.x) + (f["y"] - player.y) * (f["y"] - player.y) < 400:
             requests.get(f"http://localhost:5000/remove_food/{index}")
             player.length += 1
-            break
 
     player.draw(screen)
     player.update()
