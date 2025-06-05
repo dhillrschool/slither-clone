@@ -2,6 +2,16 @@ import pygame
 import requests
 import json
 import math
+import socket
+
+def get_local_ip():
+    try:
+        sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sk.connect(('8.8.8.8', 80))
+        res = sk.getsockname()
+    finally:
+        sk.close()
+    return res
 
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
@@ -11,7 +21,7 @@ frames = 0
 players = []
 food = []
 
-api = "http://localhost:5000"
+api = f"http://{get_local_ip()[0]}:5000"
 
 class Snake:
     def __init__(self, x, y, dir, length):
