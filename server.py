@@ -1,5 +1,5 @@
 import random
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -46,11 +46,11 @@ def remove_food(food_id):
 
 @app.route("/users", methods=['GET'])
 def get_users():
-    return f"{users}".replace("'", "\"")
+    return jsonify(users)
 
 @app.route("/food", methods=['GET'])
 def get_food():
-    return f"{food}".replace("'", "\"")
+    return jsonify(food)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)

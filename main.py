@@ -3,6 +3,32 @@ import requests
 import json
 import math
 import socket
+from urllib.request import urlopen
+
+pygame.init()
+screen = pygame.display.set_mode((1280, 720))
+font = pygame.font.SysFont("Inter", 30, True)
+font_big = pygame.font.SysFont("Inter", 100, True)
+clock = pygame.time.Clock()
+frames = 0
+players = []
+food = []
+
+class Button:
+    def __init__(self, x, y, w, h, txt):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.txt = txt
+        self.txt_surface = font.render(txt, True, (31, 31, 31))
+    
+    def draw(self, surface: pygame.Surface):
+        pygame.draw.rect(surface, (0, 255, 0), (self.x, self.y, self.w, self.h), border_radius=20)
+        surface.blit(self.txt_surface, self.txt_surface.get_rect(center=(self.x+0.5*self.w, self.y+0.5*self.h)))
+
+        if pygame.Rect(self.x, self.y, self.w, self.h).collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+            self.on_click(self.txt)
 
 def get_local_ip():
     try:
@@ -13,15 +39,53 @@ def get_local_ip():
         sk.close()
     return res
 
-pygame.init()
-screen = pygame.display.set_mode((1280, 720))
-font_big = pygame.font.SysFont("Consolas", 100)
-clock = pygame.time.Clock()
-frames = 0
-players = []
-food = []
+def scan_servers():
+    res = []
 
-api = f"http://{get_local_ip()[0]}:5000"
+    for i in range(1, 256):
+        try:
+            urlopen(f"http://192.168.1.{i}:5000/food", timeout=0.005)
+            res.append(i)
+        except: pass
+
+    return res
+
+txt_surface = font_big.render("loading...", True, (255, 255, 255))
+screen.blit(txt_surface, txt_surface.get_rect(center=(screen.get_size()[0] // 2, screen.get_size()[1] // 2)))
+pygame.display.flip()
+
+menu = True
+available_servers = scan_servers()
+selected_server = 0
+buttons: list[Button] = []
+
+def on_click(txt):
+    global menu, selected_server
+    menu = False
+    selected_server = int(txt)
+
+
+for index, id in enumerate(available_servers):
+    b = Button(30 + index * 130, 30, 100, 100, str(id))
+    b.on_click = on_click
+    buttons.append(b)
+
+while menu:
+    screen.fill((31, 31, 31))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+
+    for button in buttons:
+        button.draw(screen)
+
+    pygame.display.flip()
+    clock.tick(60)
+
+
+api = f"http://192.168.1.{selected_server}:5000"
 
 class Snake:
     def __init__(self, x, y, dir, length):
@@ -40,7 +104,9 @@ class Snake:
         mouse_pos = pygame.mouse.get_pos()
         speed = 2
 
-        if pygame.mouse.get_pressed()[0]: speed = 4
+        if pygame.mouse.get_pressed()[0] and self.length > 10: 
+            speed = 4
+            self.length -= 0.1
 
         if (self.x - self.px) * (self.x - self.px) + (self.y - self.py) * (self.y - self.py) > 225:
             self.parts.append((self.x, self.y))
