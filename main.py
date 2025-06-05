@@ -11,7 +11,7 @@ frames = 0
 players = []
 food = []
 
-api = "https://0.0.0.0"
+api = "http://localhost:5000"
 
 class Snake:
     def __init__(self, x, y, dir, length):
