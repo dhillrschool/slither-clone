@@ -11,6 +11,8 @@ frames = 0
 players = []
 food = []
 
+api = "https://0.0.0.0"
+
 class Snake:
     def __init__(self, x, y, dir, length):
         self.x = x
@@ -51,7 +53,7 @@ class Snake:
             pygame.draw.circle(surface, (255, 255, 255), part, 20)
 
     def post(self):
-        requests.post(f"http://localhost:5000/modify/{ID}", json={"x": self.x, "y": self.y, "dir": self.dir, "length": self.length})
+        requests.post(f"{api}/modify/{ID}", json={"x": self.x, "y": self.y, "dir": self.dir, "length": self.length})
 
 snakes: list[Snake] = []
 player = Snake(0, 0, 0, 10)
@@ -60,18 +62,18 @@ screen.fill((31, 31, 31))
 txt_surface = font_big.render("connecting...", True, (255, 255, 255))
 screen.blit(txt_surface, txt_surface.get_rect(center=(screen.get_size()[0] // 2, screen.get_size()[1] // 2)))
 pygame.display.flip()
-ID = int(requests.post("http://localhost:5000/register", json={"username": "kirby"}).content)
+ID = int(requests.post(f"{api}/register", json={"username": "kirby"}).content)
 
 def get_users():
-    request = requests.get("http://localhost:5000/users")
+    request = requests.get(f"{api}/users")
     return json.loads(request.content)
 
 def get_food():
-    request = requests.get("http://localhost:5000/food")
+    request = requests.get(f"{api}/food")
     return json.loads(request.content)
 
 def leave(): 
-    requests.get(f"http://localhost:5000/remove/{ID}")
+    requests.get(f"{api}/remove/{ID}")
     snakes.pop(ID-1)
 
 while True:
@@ -91,7 +93,7 @@ while True:
     for index, f in enumerate(food):
         pygame.draw.circle(screen, (255, 0, 0), (f["x"], f["y"]), 10)
         if (f["x"] - player.x) * (f["x"] - player.x) + (f["y"] - player.y) * (f["y"] - player.y) < 400:
-            requests.get(f"http://localhost:5000/remove_food/{index}")
+            requests.get(f"{api}/remove_food/{index}")
             player.length += 1
 
     player.draw(screen)
