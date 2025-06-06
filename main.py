@@ -12,6 +12,8 @@ font_big = pygame.font.SysFont("Inter", 100, True)
 clock = pygame.time.Clock()
 frames = 0
 players = []
+user_ids = []
+old_user_ids = []
 food = []
 
 class Button:
@@ -94,17 +96,19 @@ while menu:
 api = f"http://192.168.1.{selected_server}:5000"
 
 class Snake:
-    def __init__(self, x, y, dir, length):
+    def __init__(self, x, y, dir, length, name, id=0):
         self.x = x
         self.y = y
         self.px = x
         self.py = y
         self.dir = dir
+        self.name = name
         self.length = length
+        self.user_id = id
         self.parts = []
 
     def __repr__(self):
-        return f"snake at ({self.x}, {self.y}) facing {self.dir} length {self.length}"
+        return f"{self.name} (#{self.user_id}) at ({self.x}, {self.y}) facing {self.dir} length {self.length}"
 
     def update(self, move=True):
         mouse_pos = pygame.mouse.get_pos()
@@ -138,7 +142,7 @@ class Snake:
         requests.post(f"{api}/modify/{ID}", json={"x": self.x, "y": self.y, "dir": self.dir, "length": self.length})
 
 snakes: list[Snake] = []
-player = Snake(0, 0, 0, 10)
+player = Snake(0, 0, 0, 10, "kirby")
 
 screen.fill((31, 31, 31))
 txt_surface = font_big.render("connecting...", True, (255, 255, 255))
@@ -154,9 +158,7 @@ def get_food():
     request = requests.get(f"{api}/food")
     return json.loads(request.content)
 
-def leave(): 
-    requests.get(f"{api}/remove/{ID}")
-    snakes.pop(ID-1)
+def leave(): requests.get(f"{api}/remove/{ID}")
 
 while True:
     screen.fill((31, 31, 31))
@@ -167,13 +169,13 @@ while True:
             pygame.quit()
             exit()
 
-    for index, p in enumerate(snakes):
-        if index != ID - 1:
-            snakes[index].draw(screen)
-            snakes[index].update(move=False)
+    for p in snakes:
+        if p.user_id != ID:
+            p.draw(screen)
+            p.update(move=False)
 
-            for part in snakes[index].parts:
-                if (part[0] - player.x) * (part[0] - player.x) + (part[1] - player.y) * (part[1] - player.y) < 400: 
+            for part in p.parts:
+                if (part[0] - player.x) * (part[0] - player.x) + (part[1] - player.y) * (part[1] - player.y) < 400:
                     leave()
                     pygame.quit()
                     exit()
@@ -186,12 +188,15 @@ while True:
 
     player.draw(screen)
     player.update()
-    print(snakes)
     
     clock.tick(60)
     if frames & 1:
         player.post()
         user_ids = []
+        old_user_ids = []
+
+        for p in players:
+            old_user_ids.append(p["user_id"])
         
         players = get_users()
 
@@ -201,20 +206,17 @@ while True:
         if len(players) > len(snakes):
             for i in range(len(snakes), len(players)):
                 p = players[i]
-                snakes.append(Snake(p["x"], p["y"], p["dir"], p["length"]))
+                snakes.append(Snake(p["x"], p["y"], p["dir"], p["length"], p["username"], id=int(p["user_id"])))
         
         if len(players) < len(snakes):
-            old_snakes = snakes
-            snakes = []
-
-            for id in user_ids:
-                snakes.append(old_snakes[id-1])
-
-        for index, p in enumerate(players):
-            snakes[index].x = p["x"]
-            snakes[index].y = p["y"]
-            snakes[index].dir = p["dir"]
-            snakes[index].length = p["length"]
+            snakes = [snake for snake in snakes if snake.user_id in user_ids]
+        
+        for index, snake in enumerate(snakes):
+            p = players[user_ids.index(snake.user_id)]
+            snake.x = p["x"]
+            snake.y = p["y"]
+            snake.dir = p["dir"]
+            snake.length = p["length"]
         food = get_food()
     frames += 1
     pygame.display.flip()

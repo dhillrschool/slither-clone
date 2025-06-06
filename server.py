@@ -32,11 +32,11 @@ def register():
 @app.route("/modify/<int:user_id>", methods=['POST'])
 def modify(user_id):
     data = request.get_json()
-    user_id -= 1
-    users[user_id]["x"] = data["x"]
-    users[user_id]["y"] = data["y"]
-    users[user_id]["dir"] = data["dir"]
-    users[user_id]["length"] = data["length"]
+    id = user_ids.index(user_id)
+    users[id]["x"] = data["x"]
+    users[id]["y"] = data["y"]
+    users[id]["dir"] = data["dir"]
+    users[id]["length"] = data["length"]
     return "success"
 
 @app.route("/remove/<int:user_id>")
