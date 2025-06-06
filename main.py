@@ -22,13 +22,19 @@ class Button:
         self.h = h
         self.txt = txt
         self.txt_surface = font.render(txt, True, (31, 31, 31))
+        self.outline_width = 0
     
     def draw(self, surface: pygame.Surface):
-        pygame.draw.rect(surface, (0, 255, 0), (self.x, self.y, self.w, self.h), border_radius=20)
+        pygame.draw.rect(surface, (0, 127, 0), (self.x, self.y, self.w, self.h), border_radius=20)
+        pygame.draw.rect(surface, (0, 255, 0), (self.x, self.y, self.w, self.h), width=int(self.outline_width), border_radius=20)
         surface.blit(self.txt_surface, self.txt_surface.get_rect(center=(self.x+0.5*self.w, self.y+0.5*self.h)))
 
-        if pygame.Rect(self.x, self.y, self.w, self.h).collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
-            self.on_click(self.txt)
+        if pygame.Rect(self.x, self.y, self.w, self.h).collidepoint(pygame.mouse.get_pos()):
+            self.outline_width += 0.125 * (5 - self.outline_width)
+            if pygame.mouse.get_pressed()[0]:
+                self.on_click(self.txt)
+        else:
+            self.outline_width -= 0.125 * self.outline_width
 
 def get_local_ip():
     try:
@@ -166,6 +172,12 @@ while True:
             snakes[index].draw(screen)
             snakes[index].update(move=False)
 
+            for part in snakes[index].parts:
+                if (part[0] - player.x) * (part[0] - player.x) + (part[1] - player.y) * (part[1] - player.y) < 400: 
+                    leave()
+                    pygame.quit()
+                    exit()
+
     for index, f in enumerate(food):
         pygame.draw.circle(screen, (255, 0, 0), (f["x"], f["y"]), 10)
         if (f["x"] - player.x) * (f["x"] - player.x) + (f["y"] - player.y) * (f["y"] - player.y) < 400:
@@ -174,15 +186,30 @@ while True:
 
     player.draw(screen)
     player.update()
+    print(snakes)
     
     clock.tick(60)
     if frames & 1:
         player.post()
+        user_ids = []
+        
         players = get_users()
+
+        for p in players:
+            user_ids.append(p["user_id"])
+        
         if len(players) > len(snakes):
             for i in range(len(snakes), len(players)):
                 p = players[i]
                 snakes.append(Snake(p["x"], p["y"], p["dir"], p["length"]))
+        
+        if len(players) < len(snakes):
+            old_snakes = snakes
+            snakes = []
+
+            for id in user_ids:
+                snakes.append(old_snakes[id-1])
+
         for index, p in enumerate(players):
             snakes[index].x = p["x"]
             snakes[index].y = p["y"]

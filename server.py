@@ -4,8 +4,10 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 users = []
+user_ids = []
 user_parts = []
 food = []
+ID = 0
 
 for i in range(1000):
     food.append({
@@ -19,10 +21,13 @@ def home():
 
 @app.route("/register", methods=['POST'])
 def register():
+    global ID
+    ID += 1
     data = request.get_json()
     username = data.get("username")
-    users.append({"username": username, "x": 0, "y": 0, "dir": 0, "length": 10})
-    return str(len(users))
+    users.append({"username": username, "user_id": ID, "x": 0, "y": 0, "dir": 0, "length": 10})
+    user_ids.append(ID)
+    return str(ID)
 
 @app.route("/modify/<int:user_id>", methods=['POST'])
 def modify(user_id):
@@ -36,7 +41,8 @@ def modify(user_id):
 
 @app.route("/remove/<int:user_id>")
 def remove(user_id):
-    users.pop(user_id-1)
+    users.pop(user_ids.index(user_id))
+    user_ids.pop(user_ids.index(user_id))
     return "success"
 
 @app.route("/remove_food/<int:food_id>")
@@ -53,4 +59,4 @@ def get_food():
     return jsonify(food)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
+    app.run(debug=True)
