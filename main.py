@@ -2,13 +2,12 @@ import pygame
 import requests
 import json
 import math
-import socket
-from urllib.request import urlopen
+from time import time
 
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
-font = pygame.font.SysFont("Inter", 30, True)
-font_big = pygame.font.SysFont("Inter", 100, True)
+font = pygame.font.Font("fonts/Inter-Bold.otf", 30)
+font_big = pygame.font.Font("fonts/Inter-Bold.otf", 100)
 clock = pygame.time.Clock()
 frames = 0
 players = []
@@ -38,28 +37,6 @@ class Button:
         else:
             self.outline_width -= 0.125 * self.outline_width
 
-def get_local_ip():
-    try:
-        sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sk.connect(('8.8.8.8', 80))
-        res = sk.getsockname()
-    finally:
-        sk.close()
-    return res
-
-print(get_local_ip())
-
-def scan_servers():
-    res = []
-
-    for i in range(1, 256):
-        try:
-            urlopen(f"http://127.0.0.{i}:5000/food", timeout=0.005)
-            res.append(i)
-        except: pass
-
-    return res
-
 txt_surface = font_big.render("loading...", True, (255, 255, 255))
 screen.blit(txt_surface, txt_surface.get_rect(center=(screen.get_size()[0] // 2, screen.get_size()[1] // 2)))
 pygame.display.flip()
@@ -68,6 +45,7 @@ menu = True
 selected_server = ""
 
 pygame.key.set_repeat(500, 30)
+txt_surface = font.render("Server IP address", True, (255, 255, 255))
 while menu:
     screen.fill((31, 31, 31))
 
@@ -79,16 +57,23 @@ while menu:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_BACKSPACE:
                 selected_server = selected_server[:-1]
+            elif event.key == pygame.K_RETURN:
+                menu = False
             else:
                 if event.key >= 32: selected_server += event.unicode
 
-    screen.blit(font.render(selected_server, True, (255, 255, 255)), (640, 600))
-    screen.blit(font.render("|", True, (127, 127, 127)), (640 + font.size(selected_server)[0], 600))
+    input_pos = (screen.get_width() // 2 - 150, 600)
+
+    cursor_shade = 96*(math.sin(time()*math.pi)**2)+31
+    pygame.draw.rect(screen, (15, 15, 15), (input_pos[0], input_pos[1], 300, 40))
+    screen.blit(font.render(selected_server, True, (255, 255, 255)), (input_pos[0]+5, input_pos[1]+2))
+    screen.blit(font.render("|", True, (cursor_shade, cursor_shade, cursor_shade)), (input_pos[0] + 5 + font.size(selected_server)[0], input_pos[1]+2))
+    screen.blit(txt_surface, txt_surface.get_rect(center=(screen.get_width() // 2, 570)))
 
     pygame.display.flip()
     clock.tick(60)
 
-api = f"{selected_server}:5000"
+api = f"http://{selected_server}:5000"
 
 class Snake:
     def __init__(self, x, y, dir, length, name, id=0):
