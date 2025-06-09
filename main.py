@@ -47,12 +47,14 @@ def get_local_ip():
         sk.close()
     return res
 
+print(get_local_ip())
+
 def scan_servers():
     res = []
 
     for i in range(1, 256):
         try:
-            urlopen(f"http://192.168.1.{i}:5000/food", timeout=0.005)
+            urlopen(f"http://127.0.0.{i}:5000/food", timeout=0.005)
             res.append(i)
         except: pass
 
@@ -93,7 +95,7 @@ while menu:
     clock.tick(60)
 
 
-api = f"http://192.168.1.{selected_server}:5000"
+api = f"http://127.0.0.{selected_server}:5000"
 
 class Snake:
     def __init__(self, x, y, dir, length, name, id=0):
