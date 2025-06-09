@@ -65,21 +65,9 @@ screen.blit(txt_surface, txt_surface.get_rect(center=(screen.get_size()[0] // 2,
 pygame.display.flip()
 
 menu = True
-available_servers = scan_servers()
-selected_server = 0
-buttons: list[Button] = []
+selected_server = ""
 
-def on_click(txt):
-    global menu, selected_server
-    menu = False
-    selected_server = int(txt)
-
-
-for index, id in enumerate(available_servers):
-    b = Button(30 + index * 130, 30, 100, 100, str(id))
-    b.on_click = on_click
-    buttons.append(b)
-
+pygame.key.set_repeat(500, 30)
 while menu:
     screen.fill((31, 31, 31))
 
@@ -88,14 +76,19 @@ while menu:
             pygame.quit()
             exit()
 
-    for button in buttons:
-        button.draw(screen)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKSPACE:
+                selected_server = selected_server[:-1]
+            else:
+                if event.key >= 32: selected_server += event.unicode
+
+    screen.blit(font.render(selected_server, True, (255, 255, 255)), (640, 600))
+    screen.blit(font.render("|", True, (127, 127, 127)), (640 + font.size(selected_server)[0], 600))
 
     pygame.display.flip()
     clock.tick(60)
 
-
-api = f"http://127.0.0.{selected_server}:5000"
+api = f"{selected_server}:5000"
 
 class Snake:
     def __init__(self, x, y, dir, length, name, id=0):
